@@ -1,0 +1,24 @@
+# 1、基础镜像
+FROM nexus.internal:8082/local/origin/glibc:2.32-r0-alpine
+
+# 2、安装jdk
+RUN wget http://nginx-downloads.internal:9011/jdk-8u202-linux-x64.tar.gz && \
+    mkdir -p /usr/local/jdk && \
+    mv jdk-8u202-linux-x64.tar.gz /usr/local/jdk && \
+    cd /usr/local/jdk && \
+    tar -xf jdk-8u202-linux-x64.tar.gz && \
+    rm -rf jdk-8u202-linux-x64.tar.gz
+
+# 3、变量环境
+ENV JAVA_HOME=/usr/local/jdk/jdk1.8.0_202
+ENV CLASSPATH=$JAVA_HOME/bin
+ENV PATH=.:$JAVA_HOME/bin:$PATH
+
+# 4、容器启动后执行命令
+CMD ["java","-version"]
+
+# 构建命令
+#### docker build -f Dockerfile-jdk-alpine --rm -t base/jdk:8u202-alpine .
+#### docker tag base/jdk:8u202-alpine nexus.internal:8082/local/base/jdk:8u202-alpine
+#### docker rmi -f base/jdk:8u202-alpine
+#### docker push nexus.internal:8082/local/base/jdk:8u202-alpine

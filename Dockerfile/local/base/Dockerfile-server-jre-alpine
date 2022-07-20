@@ -1,0 +1,24 @@
+# 1、基础镜像
+FROM nexus.internal:8082/local/origin/glibc:2.32-r0-alpine
+
+# 2、安装jre
+RUN wget http://nginx-downloads.internal:9011/server-jre-8u202-linux-x64.tar.gz && \
+    mkdir -p /usr/local/jre && \
+    mv server-jre-8u202-linux-x64.tar.gz /usr/local/jre && \
+    cd /usr/local/jre && \
+    tar -xf server-jre-8u202-linux-x64.tar.gz && \
+    rm -rf server-jre-8u202-linux-x64.tar.gz
+
+# 3、变量环境
+ENV JAVA_HOME=/usr/local/jre/jdk1.8.0_202
+ENV CLASSPATH=$JAVA_HOME/bin
+ENV PATH=.:$JAVA_HOME/bin:$PATH
+
+# 4、容器启动后执行命令
+CMD ["java","-version"]
+
+# 构建命令
+#### docker build -f Dockerfile-server-jre-alpine --rm -t base/server-jre:8u202-alpine .
+#### docker tag base/server-jre:8u202-alpine nexus.internal:8082/local/base/server-jre:8u202-alpine
+#### docker rmi -f base/server-jre:8u202-alpine
+#### docker push nexus.internal:8082/local/base/server-jre:8u202-alpine

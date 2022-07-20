@@ -1,0 +1,26 @@
+# 1、基础镜像
+FROM alpine:3.12
+
+# 2、镜像作者和电子邮箱
+MAINTAINER chenlong "chenlong220192@gmail.com"
+
+# 3、缺省语言设置
+ENV LANG=C.UTF-8
+
+# 4、更换Alpine源
+RUN echo http://mirrors.tuna.tsinghua.edu.cn/alpine/v3.12/main > /etc/apk/repositories && \
+    echo http://mirrors.tuna.tsinghua.edu.cn/alpine/v3.12/community >> /etc/apk/repositories && \
+    apk update && apk upgrade && \
+    apk --no-cache add ca-certificates
+
+# 5、安装基础工具
+RUN apk add --no-cache bash make sudo docker
+
+# 4、容器启动后执行命令
+CMD ["docker","version"]
+
+# 构建命令
+#### docker build -f Dockerfile-devops-docker-alpine --rm -t devops/docker:20.10.16-alpine .
+#### docker tag devops/docker:20.10.16-alpine nexus.internal:8082/local/devops/docker:20.10.16-alpine
+#### docker rmi -f devops/docker:20.10.16-alpine
+#### docker push nexus.internal:8082/local/devops/docker:20.10.16-alpine

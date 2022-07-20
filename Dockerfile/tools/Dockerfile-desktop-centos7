@@ -1,0 +1,54 @@
+# 1、基础镜像
+FROM centos:7
+
+# 2、镜像作者和电子邮箱
+MAINTAINER chenlong "chenlong220192@gmail.com"
+
+# 3、cleanup
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
+    systemd-tmpfiles-setup.service ] || rm -f $i; done); \
+    rm -f /lib/systemd/system/multi-user.target.wants/*;\
+    rm -f /etc/systemd/system/*.wants/*;\
+    rm -f /lib/systemd/system/local-fs.target.wants/*; \
+    rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
+    rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
+    rm -f /lib/systemd/system/basic.target.wants/*;\
+    rm -f /lib/systemd/system/anaconda.target.wants/*;
+    VOLUME [ "/sys/fs/cgroup" ]
+    CMD ["/usr/sbin/init"]
+
+# 4、域名解析，解决阿里云服务器无法解析问题。
+RUN echo 'nameserver 8.8.8.8' >> /etc/resolv.conf && \
+    echo 'nameserver 114.114.114.114' >> /etc/resolv.conf
+
+# 5、更换yum源、安装工具、配置ssh
+RUN sed -e 's|^mirrorlist=|#mirrorlist=|g' \
+        -e 's|^#baseurl=http://mirror.centos.org|baseurl=https://mirrors.tuna.tsinghua.edu.cn|g' \
+        -i.bak \
+        /etc/yum.repos.d/CentOS-*.repo
+
+# 6、安装systemd、desktop、vnc、iptables
+RUN yum -y install httpd && \
+  systemctl enable httpd.service && \
+  yum -y groupinstall "GNOME Desktop" && \
+  yum -y install tigervnc-server && \
+  yum -y install iptables iptables-services && \
+  yum clean all
+
+# 配置vnc
+# TODO
+
+# 匿名卷
+VOLUME [ "/sys/fs/cgroup" ]
+
+# 开放端口
+EXPOSE 80
+
+#
+CMD ["/usr/sbin/init"]
+
+# 构建命令
+#### docker build -f Dockerfile-desktop-centos7 --rm -t local/desktop:centos7 .
+#### docker tag local/desktop:centos7 nexus.internal:8082/local/desktop:centos7
+#### docker rmi -f local/desktop:centos7
+#### docker push nexus.internal:8082/local/desktop:centos7

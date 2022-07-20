@@ -1,0 +1,11 @@
+# 1、基础镜像
+FROM nexus.internal:8082/local/base/jdk:8u202-alpine
+
+# 2、安装基础工具
+RUN apk add --no-cache bash make
+
+# 构建命令
+#### docker build -f Dockerfile-devops-jdk-alpine --rm -t devops/jdk:8u202-alpine .
+#### docker tag devops/jdk:8u202-alpine nexus.internal:8082/local/devops/jdk:8u202-alpine
+#### docker rmi -f devops/jdk:8u202-alpine
+#### docker push nexus.internal:8082/local/devops/jdk:8u202-alpine

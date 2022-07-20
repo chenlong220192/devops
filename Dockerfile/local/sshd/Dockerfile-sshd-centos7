@@ -1,0 +1,71 @@
+# 1、基础镜像
+FROM centos:7
+
+# 2、镜像作者和电子邮箱
+MAINTAINER chenlong "chenlong220192@gmail.com"
+
+# 3、cleanup
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
+    systemd-tmpfiles-setup.service ] || rm -f $i; done); \
+    rm -f /lib/systemd/system/multi-user.target.wants/*;\
+    rm -f /etc/systemd/system/*.wants/*;\
+    rm -f /lib/systemd/system/local-fs.target.wants/*; \
+    rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
+    rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
+    rm -f /lib/systemd/system/basic.target.wants/*;\
+    rm -f /lib/systemd/system/anaconda.target.wants/*;
+    VOLUME [ "/sys/fs/cgroup" ]
+    CMD ["/usr/sbin/init"]
+
+# 4、域名解析，解决阿里云服务器无法解析问题。
+RUN echo 'nameserver 8.8.8.8' >> /etc/resolv.conf && \
+    echo 'nameserver 114.114.114.114' >> /etc/resolv.conf
+
+# 5、更换yum源、安装工具、配置ssh
+RUN sed -e 's|^mirrorlist=|#mirrorlist=|g' \
+         -e 's|^#baseurl=http://mirror.centos.org|baseurl=https://mirrors.tuna.tsinghua.edu.cn|g' \
+         -i.bak \
+         /etc/yum.repos.d/CentOS-*.repo && \
+    yum install -y \
+     https://repo.ius.io/ius-release-el7.rpm \
+     https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && \
+    yum makecache && \
+    yum install -y epel-release && \
+    yum update -y && \
+    yum upgrade -y && \
+    yum install -y sudo lsof net-tools iproute curl wget vim make git236 bash-completion zip unzip && \
+    yum install -y htop && \
+    yum clean all
+
+# 6、安装sshd 密码“123456”
+RUN yum -y install passwd openssl openssh-server && \
+    ssh-keygen -q -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key -N '' && \
+    ssh-keygen -q -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N '' && \
+    ssh-keygen -t dsa -f /etc/ssh/ssh_host_ed25519_key -N '' && \
+    echo 123456 | passwd --stdin root
+
+# 7、安装sdkman
+RUN curl -s "https://get.sdkman.io" | bash && \
+    source "$HOME/.sdkman/bin/sdkman-init.sh" && \
+    sdk install java 11.0.12-open
+
+# 8、容器初始化脚本
+RUN mkdir -p /data && \
+    echo '#!/bin/bash' > /data/init.sh && \
+    echo 'source "$HOME/.sdkman/bin/sdkman-init.sh"' >> /data/init.sh && \
+    echo 'java -version' >> /data/init.sh && \
+    echo '/usr/sbin/sshd -D &' >> /data/init.sh && \
+    echo 'tail -f /dev/null' >> /data/init.sh && \
+    chmod -R 755 /data/init.sh
+
+# 9、开放端口
+EXPOSE 22
+
+# 10、容器启动后执行命令
+ENTRYPOINT ["/data/init.sh"]
+
+# 构建命令
+#### docker build -f Dockerfile-sshd-centos7 --rm -t local/sshd:centos7 .
+#### docker tag local/sshd:centos7 nexus.internal:8082/local/sshd:centos7
+#### docker rmi -f local/sshd:centos7
+#### docker push nexus.internal:8082/local/sshd:centos7

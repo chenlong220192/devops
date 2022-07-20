@@ -1,0 +1,81 @@
+// Jenkinsfile (Declarative Pipeline)
+pipeline {
+
+    parameters{
+        string(name:'SERVER', defaultValue:'centos7', description:'服务器')
+    }
+
+    agent { label 'master || linux'}
+
+    stages {
+      stage('SSH'){
+        when {
+            expression {
+                if(params.SERVER == null || params.SERVER.equals("")){
+                  throw new Exception("params.SERVER not found")
+                }
+                return true
+            }
+        }
+        steps {
+          // publisher
+          sshPublisher failOnError: true,
+              publishers: [
+                  sshPublisherDesc(
+                      configName: params.SERVER,
+                      verbose: true,
+                      usePromotionTimestamp: false,
+                      useWorkspaceInPromotion: false,
+                      transfers: [
+                          sshTransfer(
+                              flatten: false,
+                              cleanRemote: true,
+                              makeEmptyDirs: false,
+                              noDefaultExcludes: false,
+                              remoteDirectorySDF: false,
+                              patternSeparator: '[, ]+',
+                              excludes: '',
+                              execCommand: '''
+
+                                sudo sed -e 's|^mirrorlist=|#mirrorlist=|g' \
+                                         -e 's|^#baseurl=http://mirror.centos.org|baseurl=https://mirrors.tuna.tsinghua.edu.cn|g' \
+                                         -i.bak \
+                                         /etc/yum.repos.d/CentOS-*.repo
+                                yum makecache
+                                yum update -y
+                                yum upgrade -y
+                                yum install -y telnet vim lsof net-tools curl wget make bash-completion zip unzip
+                                yum install -y epel-release
+                                yum install -y htop
+                                yum install -y nfs-utils rpcbind
+                                systemctl start rpcbind
+                                systemctl start nfs
+                                systemctl enable rpcbind
+                                systemctl enable nfs
+                                systemctl status rpcbind
+                                systemctl status nfs
+                                yum clean all
+                                timedatectl set-timezone Asia/Shanghai
+                                timedatectl set-ntp yes
+                                timedatectl
+                                systemctl disable firewalld
+                                systemctl disable postfix
+                                systemctl disable NetworkManager-dispatcher
+
+                              ''',
+                              execTimeout: 600000
+                          )
+                      ]
+                  )
+              ]
+        }
+      }
+    }
+
+    post{
+        always{
+            cleanWs()
+        }
+    }
+
+}

@@ -1,0 +1,70 @@
+# 1、基础镜像
+FROM ubuntu:14.04
+
+# 2、镜像作者和电子邮箱
+MAINTAINER chenlong "chenlong220192@gmail.com"
+
+# 3、在构建镜像时，指定镜像的工作目录。之后的命令都是基于此工作目录，不存在则自动创建。
+WORKDIR /data
+
+# 4、修改镜像源
+RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak && \
+    echo '' > /etc/apt/sources.list && \
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse' > /etc/apt/sources.list.d/aliyun.list && \
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse' >> /etc/apt/sources.list.d/aliyun.list && \
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse' >> /etc/apt/sources.list.d/aliyun.list && \
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse' >> /etc/apt/sources.list.d/aliyun.list && \
+    echo 'deb http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse' >> /etc/apt/sources.list.d/aliyun.list && \
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse' >> /etc/apt/sources.list.d/aliyun.list && \
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse' >> /etc/apt/sources.list.d/aliyun.list && \
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse' >> /etc/apt/sources.list.d/aliyun.list && \
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse' >> /etc/apt/sources.list.d/aliyun.list && \
+    echo 'deb-src http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse' >> /etc/apt/sources.list.d/aliyun.list
+
+# 5、初始化环境
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y \
+    curl \
+    wget \
+    zip \
+    unzip \
+    vim \
+    ant \
+    git \
+    mercurial \
+    build-essential \
+    ccache \
+    cpio \
+    g++ \
+    gcc \
+    curl \
+    libx11-dev \
+    libxext-dev \
+    libxrender-dev \
+    libxtst-dev \
+    libxt-dev \
+    libcups2-dev \
+    libfreetype6-dev \
+    libasound2-dev \
+    libelf-dev \
+    openjdk-7-jdk \
+    gdb
+
+# 6、拉取源代码
+RUN hg clone http://hg.openjdk.java.net/jdk8u/jdk8u/
+
+# 7、配置
+RUN cd /data/jdk8u && \
+    chmod a+x configure && \
+    chmod a+x get_source.sh && \
+    ./get_source.sh
+
+# 8、编译
+RUN sed -i 's/3%/3% 4%/g' hotspot/make/linux/Makefile && \
+    ./configure --with-freetype-include=/usr/include/freetype2 --with-freetype-lib=/usr/lib/x86_64-linux-gnu --with-debug-level=slowdebug --with-target-bits=64 && \
+    make clean && \
+    make images
+
+# 构建命令
+#### docker build -f Dockerfile-openjdk_8u-ubuntu14_04 --rm -t local/openjdk:8u-ubuntu14_04 .
