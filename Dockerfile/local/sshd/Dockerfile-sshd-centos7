@@ -47,7 +47,7 @@ RUN yum -y install passwd openssl openssh-server && \
 # 7、安装sdkman
 RUN curl -s "https://get.sdkman.io" | bash && \
     source "$HOME/.sdkman/bin/sdkman-init.sh" && \
-    sdk install java 11.0.12-open
+    sdk install java 8.0.265-open
 
 # 8、容器初始化脚本
 RUN mkdir -p /data && \

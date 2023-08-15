@@ -21,7 +21,6 @@ RUN yum clean all && \
     telnet \
     iproute \
     curl \
-    wget \
     wget && \
     yum clean all
 

@@ -40,6 +40,7 @@ pipeline {
                                 yum install -y yum-utils device-mapper-persistent-data lvm2
                                 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
                                 yum install -y docker-ce
+                                yum clean all
                                 mkdir -p /etc/docker
                                 echo '{"registry-mirrors": ["https://wivp6w5w.mirror.aliyuncs.com"]}' > /etc/docker/daemon.json
                                 systemctl daemon-reload

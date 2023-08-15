@@ -50,6 +50,7 @@ pipeline {
                                   --nodes=1 \
                                   --cpus=2 \
                                   --memory=4G \
+                                  --listen-address='0.0.0.0' \
                                   --disk-size=20G \
                                   --image-repository=auto \
                                   --image-mirror-country=cn \
@@ -58,7 +59,7 @@ pipeline {
                                   --interactive=true \
                                   --install-addons=true \
                                   --output=json \
-                                  --kubernetes-version=v1.24.2
+                                  --kubernetes-version=v1.26.1
 EOF
 
                                 wget https://dl.k8s.io/release/v1.22.3/bin/linux/amd64/kubectl
